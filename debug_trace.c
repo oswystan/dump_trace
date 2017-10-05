@@ -9,7 +9,7 @@
  *       Revision:  initial draft;
  **************************************************************************************
  */
-#define LOG_TAG "main"
+#define LOG_TAG "dumptrace"
 #include "log.h"
 
 #include <string.h>
@@ -130,7 +130,7 @@ static void dump_backtrace(unw_context_t* ctx)
         unw_get_reg(&cursor, UNW_REG_IP, &pc);
         fname[0] = '\0';
         (void) unw_get_proc_name(&cursor, fname, sizeof(fname), &offset);
-        logd ("#%02d pc 0x%012llx: %s (%s+0x%lx)", level++, (unsigned long long)pc, get_map_name((void*)pc),
+        logd("#%02d pc 0x%012llx: %s (%s+0x%lx)", level++, (unsigned long long)pc, get_map_name((void*)pc),
                 fname, (unsigned long)offset);
         if (0 == pc || strcmp("main", fname) == 0) {
             break;
@@ -147,7 +147,8 @@ static void sig_handler(int sig, siginfo_t *info, void *data ) {
     exit(-1);
 }
 
-int debug_trace_init() {
+#define __ctors __attribute__((constructor))
+void __ctors debug_trace_init() {
     struct sigaction sa;
     memset(&sa, 0x00, sizeof(sa));
     sa.sa_sigaction = sig_handler;
@@ -156,7 +157,7 @@ int debug_trace_init() {
     unsigned int i = 0;
     for (i = 0; i < sizeof(g_sigs)/sizeof(g_sigs[0]); i++) {
         if (sigaction(g_sigs[i].sig, &sa, NULL) != 0) {
-            return errno;
+            return;
         }
     }
 }

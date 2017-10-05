@@ -16,8 +16,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
-#include "debug_trace.h"
-
 
 void fun() {
 }
@@ -33,8 +31,8 @@ void fun2() {
 }
 
 void fun3() {
-    /*int a = 0;*/
-    /*int b = 3/a;*/
+    int a = 0;
+    int b = 3/a;
     fun2();
 }
 
@@ -48,7 +46,6 @@ void do_it() {
 int main(int argc, const char *argv[]) {
     logfunc();
     logd("pid: %d", getpid());
-    debug_trace_init();
     do_it();
     return 0;
 }
