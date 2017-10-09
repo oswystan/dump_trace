@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
+#include "libshared.h"
 
 void fun() {
 }
@@ -45,7 +46,9 @@ void do_it() {
 
 int main(int argc, const char *argv[]) {
     logfunc();
+    logd("argv0=%s", argv[0]);
     logd("pid: %d", getpid());
+    init_shared();
     do_it();
     return 0;
 }

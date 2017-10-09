@@ -10,26 +10,37 @@
 .PHONY: all clean
 
 bin := main
-src := $(wildcard *.c *.cpp)
+src := main.c debug_trace.c
 obj := $(src:.c=.o)
 obj := $(obj:.cpp=.o)
 ld_flags := -lunwind -lunwind-x86_64
 
+shared_src := libshared.c
+shared_obj := $(shared_src:.c=.o)
+shared_name := libshared.so
+
 all: $(bin)
 
-$(bin): $(obj)
+$(bin): $(obj) $(shared_name)
 	@gcc $^ -o $(bin) $(ld_flags)
 	@echo "[gen] "$@
+
+$(shared_name): $(shared_obj)
+	@echo "[gen] $@"
+	@gcc -shared $^ -o $@
+
 %.o:%.c
 	@echo "[ cc] "$@
-	@gcc -c -g $< -o $@
+	@gcc -c -g -fPIC $< -o $@
 %.o:%.cpp
 	@echo "[cpp] "$@
 	@g++ -c $< -o $@
 
 clean:
 	@echo "cleaning..."
-	@rm -f *.o $(bin)
+	@rm -f *.o $(bin) $(shared_name)
 	@echo "done."
 
+test:
+	@LD_LIBRARY_PATH=. ./main
 #######################################################################

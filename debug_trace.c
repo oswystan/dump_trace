@@ -21,6 +21,7 @@
 #include <sys/prctl.h>
 #include <libunwind.h>
 #include <errno.h>
+#include <limits.h>
 
 #define gettid() syscall(SYS_gettid)
 
@@ -85,15 +86,15 @@ static void parse_proc_maps(int pid) {
     fclose(fp);
 }
 
-static const char* get_map_name(void* p) {
+static const proc_map_t* get_mapinfo(void* p) {
     int i = 0;
     while(g_maps[i]) {
         if (g_maps[i]->start <= p && g_maps[i]->end >= p) {
-            return g_maps[i]->name;
+            return g_maps[i];
         }
         ++i;
     }
-    return "unknown map";
+    return NULL;
 }
 
 static const char* get_signame(int sig) {
@@ -118,8 +119,16 @@ static void format_sig_summary(int sig, siginfo_t* info) {
     logd("pid: %d, tid: %ld, name: %s", getpid(), gettid(), tname);
 }
 
+static const char* get_executable_name() {
+    static char fn[PATH_MAX];
+    readlink("/proc/self/exe", fn, sizeof(fn));
+    return fn;
+}
+
+#pragma GCC diagnostic ignored "-Wformat"
 static void dump_backtrace(unw_context_t* ctx)
 {
+    char cwd[PATH_MAX];
     unw_cursor_t    cursor;
     unw_init_local(&cursor, ctx);
     int level = 0;
@@ -130,7 +139,12 @@ static void dump_backtrace(unw_context_t* ctx)
         unw_get_reg(&cursor, UNW_REG_IP, &pc);
         fname[0] = '\0';
         (void) unw_get_proc_name(&cursor, fname, sizeof(fname), &offset);
-        logd("#%02d pc 0x%012llx: %s (%s+0x%lx)", level++, (unsigned long long)pc, get_map_name((void*)pc),
+        const proc_map_t* map = get_mapinfo((void*)pc);
+        void* rel_pc = (void*)pc;
+        if (map && strcmp(map->name, get_executable_name()) != 0) {
+            rel_pc = (void*)(rel_pc-map->start);
+        }
+        logd("#%02d pc %012p %s (%s+0x%lx)", level++, rel_pc, map->name,
                 fname, (unsigned long)offset);
         if (0 == pc || strcmp("main", fname) == 0) {
             break;
@@ -138,13 +152,14 @@ static void dump_backtrace(unw_context_t* ctx)
         ret = unw_step(&cursor);
     }
 }
+#pragma GCC diagnostic warning "-Wformat"
 static void sig_handler(int sig, siginfo_t *info, void *data ) {
     parse_proc_maps(getpid());
     logd("-----------------------------------------------");
     format_sig_summary(sig, info);
     dump_backtrace((unw_context_t*) data);
     logd("-----------------------------------------------");
-    exit(-1);
+    exit(0);
 }
 
 #define __ctors __attribute__((constructor))
