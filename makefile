@@ -13,7 +13,7 @@ bin := main
 src := main.c debug_trace.c
 obj := $(src:.c=.o)
 obj := $(obj:.cpp=.o)
-ld_flags := -lunwind -lunwind-x86_64
+ld_flags := -lunwind -lunwind-x86_64 -lpthread
 
 shared_src := libshared.c
 shared_obj := $(shared_src:.c=.o)

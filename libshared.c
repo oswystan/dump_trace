@@ -12,10 +12,21 @@
 #define LOG_TAG "shared"
 #include "log.h"
 
+#include <pthread.h>
+
+static void* thread_loop(void* data) {
+    logd("hello %s", __func__);
+    int* p = (int*)0x100;
+    *p = 100;
+}
+
 void init_shared() {
     logd("hello %s", __func__);
-    int* p = (int*)0x010;
-    *p = 9;
+    /*int* p = (int*)0x100;*/
+    /**p = 100;            */
+    pthread_t tid;
+    pthread_create(&tid, NULL, thread_loop, 0);
+    sleep(1);
 }
 
 

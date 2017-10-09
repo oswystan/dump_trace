@@ -139,6 +139,9 @@ static void dump_backtrace(unw_context_t* ctx)
         unw_get_reg(&cursor, UNW_REG_IP, &pc);
         fname[0] = '\0';
         (void) unw_get_proc_name(&cursor, fname, sizeof(fname), &offset);
+        if (pc == 0) {
+            break;
+        }
         const proc_map_t* map = get_mapinfo((void*)pc);
         void* rel_pc = (void*)pc;
         if (map && strcmp(map->name, get_executable_name()) != 0) {
@@ -146,7 +149,7 @@ static void dump_backtrace(unw_context_t* ctx)
         }
         logd("#%02d pc %012p %s (%s+0x%lx)", level++, rel_pc, map->name,
                 fname, (unsigned long)offset);
-        if (0 == pc || strcmp("main", fname) == 0) {
+        if (strcmp("main", fname) == 0) {
             break;
         }
         ret = unw_step(&cursor);
