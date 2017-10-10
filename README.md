@@ -23,7 +23,7 @@
 ## INSTALL
 
 ```
-sudo apt-get install libunwind8-dev
+sudo apt-get install libunwind-dev
 make
 make test
 ```
