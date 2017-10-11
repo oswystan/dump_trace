@@ -41,6 +41,6 @@ clean:
 	@rm -f *.o $(bin) $(shared_name)
 	@echo "done."
 
-test:
+test: $(bin)
 	@LD_LIBRARY_PATH=. ./main
 #######################################################################
