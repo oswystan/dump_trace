@@ -13,6 +13,7 @@
 #include "log.h"
 
 #include <pthread.h>
+#include <unistd.h>
 
 static void* thread_loop(void* data) {
     logd("hello %s", __func__);
