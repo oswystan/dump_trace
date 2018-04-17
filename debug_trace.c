@@ -119,6 +119,39 @@ static void format_sig_summary(int sig, siginfo_t* info) {
     logd("pid: %d, tid: %ld, name: %s", getpid(), gettid(), tname);
 }
 
+static void dump_regs(unw_cursor_t* cursor) {
+    struct reg_desc_t {
+        unw_word_t val;
+        char name[8];
+    };
+
+    unw_regnum_t reg = 0;
+    struct reg_desc_t regs[17];
+    while (reg < (unw_regnum_t)(sizeof(regs)/sizeof(regs[0]))) {
+        unw_get_reg(cursor, reg, &regs[reg].val);
+        sprintf(regs[reg].name, "%s", unw_regname(reg));
+        reg++;
+    }
+    char line[256];
+    uint32_t i=0;
+    memset(line, 0x00, sizeof(line));
+    while(i<(sizeof(regs)/sizeof(regs[0]))) {
+        if (line[0] == '\0') {
+            sprintf(line, "%3s:0x%012lx", regs[i].name, regs[i].val);
+        } else {
+            sprintf(line, "%s  %3s:0x%012lx", line, regs[i].name, regs[i].val);
+        }
+        i++;
+        if (i%3 == 0 && i != 0) {
+            logd("%s", line);
+            memset(line, 0x00, sizeof(line));
+        }
+    }
+    if (line[0]) {
+        logd("%s", line);
+    }
+}
+
 static const char* get_executable_name() {
     static char fn[PATH_MAX];
     readlink("/proc/self/exe", fn, sizeof(fn));
@@ -130,8 +163,11 @@ void dump_backtrace(unw_context_t* ctx)
 {
     unw_cursor_t    cursor;
     unw_init_local(&cursor, ctx);
+    dump_regs(&cursor);
     int level = 0;
     int ret = 1;
+    loge("");
+    loge("backtrace:");
     while (ret > 0) {
         unw_word_t  offset, pc;
         char        fname[64];

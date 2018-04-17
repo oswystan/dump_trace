@@ -17,8 +17,9 @@
 
 static void* thread_loop(void* data) {
     logd("hello %s", __func__);
-    int* p = (int*)0x100;
-    *p = 100;
+    int* p = (int*)0x23456789;
+    int val = 0x12345678;
+    *p = val;
     return p;
 }
 
