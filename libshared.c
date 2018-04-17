@@ -19,6 +19,7 @@ static void* thread_loop(void* data) {
     logd("hello %s", __func__);
     int* p = (int*)0x100;
     *p = 100;
+    return p;
 }
 
 void init_shared() {

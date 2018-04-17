@@ -32,8 +32,6 @@ void fun2() {
 }
 
 void fun3() {
-    int a = 0;
-    int b = 3/a;
     fun2();
 }
 

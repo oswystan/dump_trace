@@ -51,7 +51,7 @@ static sig_name_t g_sigs[] = {
 
 static void parse_proc_maps(int pid) {
     memset(g_maps, 0x00, sizeof(g_maps));
-    int cnt = 0;
+    unsigned int cnt = 0;
     char fn[64];
     char buf[1024];
     sprintf(fn, "/proc/%d/maps", pid);
@@ -64,7 +64,7 @@ static void parse_proc_maps(int pid) {
     int name_pos;
     while (fgets(buf, sizeof(buf), fp)) {
         buf[strlen(buf)-1] = '\0';
-        if (sscanf(buf, "%" SCNx64 "-%" SCNx64 " %*4s %*x %*x:%*x %*d %n",
+        if (sscanf(buf, "%lx-%lx %*4s %*x %*x:%*x %*d %n",
                     &start, &end, &name_pos) != 2) {
             loge("error");
             continue;
@@ -126,9 +126,8 @@ static const char* get_executable_name() {
 }
 
 #pragma GCC diagnostic ignored "-Wformat"
-static void dump_backtrace(unw_context_t* ctx)
+void dump_backtrace(unw_context_t* ctx)
 {
-    char cwd[PATH_MAX];
     unw_cursor_t    cursor;
     unw_init_local(&cursor, ctx);
     int level = 0;
@@ -143,9 +142,9 @@ static void dump_backtrace(unw_context_t* ctx)
             break;
         }
         const proc_map_t* map = get_mapinfo((void*)pc);
-        void* rel_pc = (void*)pc;
+        char* rel_pc = (char*)pc;
         if (map && strcmp(map->name, get_executable_name()) != 0) {
-            rel_pc = (void*)(rel_pc-map->start);
+            rel_pc = (char*)(rel_pc-(char*)map->start);
         }
         logd("#%02d pc %012p %s (%s+0x%lx)", level++, rel_pc, map->name,
                 fname, (unsigned long)offset);
@@ -155,14 +154,20 @@ static void dump_backtrace(unw_context_t* ctx)
         ret = unw_step(&cursor);
     }
 }
+
+static void resend_signal(siginfo_t* info) {
+    signal(info->si_signo, SIG_DFL);
+    syscall(SYS_rt_tgsigqueueinfo, getpid(), gettid(), info->si_signo, info);
+}
 #pragma GCC diagnostic warning "-Wformat"
 static void sig_handler(int sig, siginfo_t *info, void *data ) {
     parse_proc_maps(getpid());
-    logd("-----------------------------------------------");
+    logd("*** *** *** *** *** *** *** *** *** *** *** ***");
     format_sig_summary(sig, info);
     dump_backtrace((unw_context_t*) data);
-    logd("-----------------------------------------------");
-    exit(0);
+    logd("*** *** *** *** *** *** *** *** *** *** *** ***");
+    resend_signal(info);
+    //exit(0);
 }
 
 #define __ctors __attribute__((constructor))

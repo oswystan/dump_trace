@@ -14,6 +14,7 @@ src := main.c debug_trace.c
 obj := $(src:.c=.o)
 obj := $(obj:.cpp=.o)
 ld_flags := -lunwind -lunwind-$(shell uname -m) -lpthread
+cflags := -Wall -Werror
 
 shared_src := libshared.c
 shared_obj := $(shared_src:.c=.o)
@@ -31,10 +32,10 @@ $(shared_name): $(shared_obj)
 
 %.o:%.c
 	@echo "[ cc] "$@
-	@gcc -c -g -fPIC $< -o $@
+	@gcc -c -g -fPIC $(cflags) $< -o $@
 %.o:%.cpp
 	@echo "[cpp] "$@
-	@g++ -c $< -o $@
+	@g++ -c $(cflags) $< -o $@
 
 clean:
 	@echo "cleaning..."
