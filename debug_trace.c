@@ -170,7 +170,7 @@ void dump_backtrace(unw_context_t* ctx)
     loge("backtrace:");
     while (ret > 0) {
         unw_word_t  offset, pc;
-        char        fname[64];
+        char        fname[256];
         unw_get_reg(&cursor, UNW_REG_IP, &pc);
         fname[0] = '\0';
         (void) unw_get_proc_name(&cursor, fname, sizeof(fname), &offset);

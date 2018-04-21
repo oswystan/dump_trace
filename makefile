@@ -24,6 +24,7 @@ all: $(bin)
 
 $(bin): $(obj) $(shared_name)
 	@gcc $^ -o $(bin) $(ld_flags)
+	@strip $@
 	@echo "[gen] "$@
 
 $(shared_name): $(shared_obj)
